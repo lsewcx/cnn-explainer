@@ -41,27 +41,30 @@ class Node {
  * @class Connection 表示神经网络中两个节点之间的连接。
  * @classdesc Connection 类定义了神经网络中节点之间的连接，包括起始节点、目标节点和连接权重。
  */
-constructor(source, dest, weight) {
-  this.source = source;
-  this.dest = dest;
-  this.weight = weight;
+class Link {
+  constructor(source, dest, weight) {
+    this.source = source;
+    this.dest = dest;
+    this.weight = weight;
+  }
 }
+
 /**
  * 
- * @param {*} nnJSON 
- * @param {*} inputImageArray 
- * @returns 
+ * @param {*} nnJSON 神经网络的JSON表示
+ * @param {*} inputImageArray 输入图像数组
+ * @returns 返回构建的神经网络
  */
 const constructNNFromJSON = (nnJSON, inputImageArray) => {
   console.log(nnJSON);
   console.log(inputImageArray);
-  let nn = [];
+  let nn = [];  // 初始化神经网络
 
-  // Add the first layer (input layer)
+  // 添加第一层（输入层）
   let inputLayer = [];
   let inputShape = nnJSON[0].input_shape;
 
-  // First layer's three nodes' outputs are the channels of inputImageArray
+  // 第一层的三个节点的输出是inputImageArray的通道
   for (let i = 0; i < inputShape[2]; i++) {
     let node = new Node('input', i, nodeType.INPUT, 0, inputImageArray[i]);
     inputLayer.push(node);
@@ -70,10 +73,12 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
   nn.push(inputLayer);
   let curLayerIndex = 1;
 
+  // 遍历nnJSON中的每一层
   nnJSON.forEach(layer => {
     let curLayerNodes = [];
     let curLayerType;
 
+    // 确定当前层的类型
     if (layer.name.includes('conv')) {
       curLayerType = nodeType.CONV;
     } else if (layer.name.includes('pool')) {
@@ -91,22 +96,23 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
     let shape = layer.output_shape.slice(0, 2);
     let bias = 0;
     let output;
+    // 如果当前层是FLATTEN或FC，输出为0，否则初始化为二维数组
     if (curLayerType === nodeType.FLATTEN || curLayerType === nodeType.FC) {
       output = 0;
     } else {
       output = init2DArray(shape[0], shape[1], 0);
     }
 
-    // Add neurons into this layer
+    // 将神经元添加到这一层
     for (let i = 0; i < layer.num_neurons; i++) {
       if (curLayerType === nodeType.CONV || curLayerType === nodeType.FC) {
         bias = layer.weights[i].bias;
       }
       let node = new Node(layer.name, i, curLayerType, bias, output)
 
-      // Connect this node to all previous nodes (create links)
+      // 将此节点连接到所有前面的节点（创建链接）
       if (curLayerType === nodeType.CONV || curLayerType === nodeType.FC) {
-        // CONV and FC layers have weights in links. Links are one-to-multiple
+        // CONV和FC层在链接中有权重。链接是一对多的
         for (let j = 0; j < nn[curLayerIndex - 1].length; j++) {
           let preNode = nn[curLayerIndex - 1][j];
           let curLink = new Link(preNode, node, layer.weights[i].weights[j]);
@@ -114,16 +120,15 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
           node.inputLinks.push(curLink);
         }
       } else if (curLayerType === nodeType.RELU || curLayerType === nodeType.POOL) {
-        // RELU and POOL layers have no weights. Links are one-to-one
+        // RELU和POOL层没有权重。链接是一对一的
         let preNode = nn[curLayerIndex - 1][i];
         let link = new Link(preNode, node, null);
         preNode.outputLinks.push(link);
         node.inputLinks.push(link);
       } else if (curLayerType === nodeType.FLATTEN) {
-        // Flatten layer has no weights. Links are multiple-to-one.
-        // Use dummy weights to store the corresponding entry in the previsou
-        // node as (row, column)
-        // The flatten() in tf2.keras has order: channel -> row -> column
+        // Flatten层没有权重。链接是多对一的。
+        // 使用虚拟权重存储前一个节点中的对应条目（行，列）
+        // tf2.keras中的flatten()的顺序是：通道 -> 行 -> 列
         let preNodeWidth = nn[curLayerIndex - 1][0].output.length,
           preNodeNum = nn[curLayerIndex - 1].length,
           preNodeIndex = i % preNodeNum,
@@ -138,27 +143,33 @@ const constructNNFromJSON = (nnJSON, inputImageArray) => {
       curLayerNodes.push(node);
     }
 
-    // Add current layer to the NN
+    // 将当前层添加到神经网络
     nn.push(curLayerNodes);
     curLayerIndex++;
   });
 
-  return nn;
+  return nn;  // 返回构建的神经网络
 }
 
 export const constructNN = (inputImageFile) => {
-  // Load the saved model file
+  // 加载保存的模型文件
   return new Promise((resolve, reject) => {
+    // 从指定URL获取JSON数据
     fetch('PUBLIC_URL/assets/data/nn_10.json')
       .then(response => {
+        // 将响应内容解析为JSON
         response.json().then(nnJSON => {
+          // 获取输入图像的数组
           getInputImageArray(inputImageFile)
             .then(inputImageArray => {
+              // 从JSON和输入图像数组构建神经网络
               let nn = constructNNFromJSON(nnJSON, inputImageArray);
+              // 将构建的神经网络作为Promise的解析结果
               resolve(nn);
             })
         });
       })
+      // 如果在上述过程中出现错误，将错误作为Promise的拒绝原因
       .catch(error => {
         reject(error);
       });
@@ -168,15 +179,15 @@ export const constructNN = (inputImageFile) => {
 // Helper functions
 
 /**
- * Create a 2D array (matrix) with given size and default value.
+ * 根据给定的大小和默认值创建一个二维数组（矩阵）。
  * 
- * @param {int} height Height (number of rows) for the matrix
- * @param {int} width Width (number of columns) for the matrix
- * @param {int} fill Default value to fill this matrix
+ * @param {int} height 矩阵的高度（行数）
+ * @param {int} width 矩阵的宽度（列数）
+ * @param {int} fill 用于填充此矩阵的默认值
  */
 export const init2DArray = (height, width, fill) => {
   let array = [];
-  // Itereate through rows
+  // 遍历行
   for (let r = 0; r < height; r++) {
     let row = new Array(width).fill(fill);
     array.push(row);
@@ -185,17 +196,20 @@ export const init2DArray = (height, width, fill) => {
 }
 
 /**
- * Dot product of two matrices.
- * @param {[[number]]} mat1 Matrix 1
- * @param {[[number]]} mat2 Matrix 2
+ * 两个矩阵的点积。
+ * @param {[[number]]} mat1 矩阵1
+ * @param {[[number]]} mat2 矩阵2
  */
 const matrixDot = (mat1, mat2) => {
-  console.assert(mat1.length === mat2.length, 'Dimension not matching');
-  console.assert(mat1[0].length === mat2[0].length, 'Dimension not matching');
+  // 断言两个矩阵的维度匹配
+  console.assert(mat1.length === mat2.length, '维度不匹配');
+  console.assert(mat1[0].length === mat2[0].length, '维度不匹配');
 
   let result = 0;
+  // 遍历矩阵的每个元素
   for (let i = 0; i < mat1.length; i++) {
     for (let j = 0; j < mat1[0].length; j++) {
+      // 计算点积
       result += mat1[i][j] * mat2[i][j];
     }
   }
@@ -204,18 +218,22 @@ const matrixDot = (mat1, mat2) => {
 }
 
 /**
- * Matrix elementwise addition.
- * @param {[[number]]} mat1 Matrix 1
- * @param {[[number]]} mat2 Matrix 2
+ * 矩阵元素逐个相加。
+ * @param {[[number]]} mat1 矩阵1
+ * @param {[[number]]} mat2 矩阵2
  */
 export const matrixAdd = (mat1, mat2) => {
-  console.assert(mat1.length === mat2.length, 'Dimension not matching');
-  console.assert(mat1[0].length === mat2[0].length, 'Dimension not matching');
+  // 断言两个矩阵的维度匹配
+  console.assert(mat1.length === mat2.length, '维度不匹配');
+  console.assert(mat1[0].length === mat2[0].length, '维度不匹配');
 
+  // 初始化一个与输入矩阵同维度的结果矩阵
   let result = init2DArray(mat1.length, mat1.length, 0);
 
+  // 遍历矩阵的每个元素
   for (let i = 0; i < mat1.length; i++) {
     for (let j = 0; j < mat1.length; j++) {
+      // 计算元素逐个相加的结果
       result[i][j] = mat1[i][j] + mat2[i][j];
     }
   }
@@ -224,53 +242,59 @@ export const matrixAdd = (mat1, mat2) => {
 }
 
 /**
- * 2D slice on a matrix.
- * @param {[[number]]} mat Matrix
- * @param {int} xs First dimension (row) starting index
- * @param {int} xe First dimension (row) ending index
- * @param {int} ys Second dimension (column) starting index
- * @param {int} ye Second dimension (column) ending index
+ * 对矩阵进行二维切片。
+ * @param {[[number]]} mat 矩阵
+ * @param {int} xs 第一维度（行）的起始索引
+ * @param {int} xe 第一维度（行）的结束索引
+ * @param {int} ys 第二维度（列）的起始索引
+ * @param {int} ye 第二维度（列）的结束索引
  */
 export const matrixSlice = (mat, xs, xe, ys, ye) => {
+  // 对矩阵进行切片操作
   return mat.slice(xs, xe).map(s => s.slice(ys, ye));
 }
 
 /**
- * Compute the maximum of a matrix.
- * @param {[[number]]} mat Matrix
+ * 计算矩阵的最大值。
+ * @param {[[number]]} mat 矩阵
  */
 const matrixMax = (mat) => {
+  // 初始化当前最大值为负无穷大
   let curMax = -Infinity;
+  // 遍历矩阵的每个元素
   for (let i = 0; i < mat.length; i++) {
     for (let j = 0; j < mat[0].length; j++) {
+      // 如果当前元素大于当前最大值，则更新最大值
       if (mat[i][j] > curMax) {
         curMax = mat[i][j];
       }
     }
   }
+  // 返回最大值
   return curMax;
 }
 
 /**
- * Convert canvas image data into a 3D array with dimension [height, width, 3].
- * Each pixel is in 0-255 scale.
- * @param {[int8]} imageData Canvas image data
+ * 将画布图像数据转换为维度为[height, width, 3]的3D数组。
+ * 每个像素的范围是0-255。
+ * @param {[int8]} imageData 画布图像数据
  */
 const imageDataTo3DArray = (imageData) => {
-  // Get image dimension (assume square image)
+  // 获取图像维度（假设为正方形图像）
   let width = Math.sqrt(imageData.length / 4);
 
-  // Create array placeholder for each channel
+  // 为每个通道创建数组占位符
   let imageArray = [init2DArray(width, width, 0), init2DArray(width, width, 0),
   init2DArray(width, width, 0)];
 
-  // Iterate through the data to fill out channel arrays above
+  // 遍历数据以填充上述通道数组
   for (let i = 0; i < imageData.length; i++) {
     let pixelIndex = Math.floor(i / 4),
       channelIndex = i % 4,
       row = Math.floor(pixelIndex / width),
       column = pixelIndex % width;
 
+    // 如果通道索引小于3，则填充对应的像素值
     if (channelIndex < 3) {
       imageArray[channelIndex][row][column] = imageData[i];
     }
@@ -280,31 +304,43 @@ const imageDataTo3DArray = (imageData) => {
 }
 
 /**
- * Get the 3D pixel value array of the given image file.
- * @param {string} imgFile File path to the image file
- * @returns A promise with the corresponding 3D array
+ * 获取给定图像文件的3D像素值数组。
+ * @param {string} imgFile 图像文件的文件路径
+ * @returns 返回一个Promise，其值为对应的3D数组
  */
 const getInputImageArray = (imgFile) => {
+  // 创建一个新的canvas元素
   let canvas = document.createElement('canvas');
+  // 设置canvas样式为不显示
   canvas.style.cssText = 'display:none;';
+  // 将canvas元素添加到body中
   document.getElementsByTagName('body')[0].appendChild(canvas);
+  // 获取canvas的2D渲染上下文
   let context = canvas.getContext('2d');
 
+  // 返回一个新的Promise
   return new Promise((resolve, reject) => {
+    // 创建一个新的Image对象
     let inputImage = new Image();
+    // 设置Image对象的源为图像文件路径
     inputImage.src = imgFile;
+    // 当图像加载完成时
     inputImage.onload = () => {
+      // 在canvas上绘制图像
       context.drawImage(inputImage, 0, 0,);
-      // Get image data and convert it to a 3D array
+      // 获取图像数据并将其转换为3D数组
       let imageData = context.getImageData(0, 0, inputImage.width,
         inputImage.height).data;
 
-      // Remove this newly created canvas element
+      // 移除新创建的canvas元素
       canvas.parentNode.removeChild(canvas);
 
+      // 在控制台打印3D数组
       console.log(imageDataTo3DArray(imageData));
+      // 将3D数组作为Promise的解析值
       resolve(imageDataTo3DArray(imageData));
     }
+    // 如果图像加载出错，拒绝Promise
     inputImage.onerror = reject;
   })
 }
