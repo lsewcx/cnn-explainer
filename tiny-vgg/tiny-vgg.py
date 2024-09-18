@@ -322,29 +322,37 @@ test_dataset = prepare_for_training(test_labeld_dataset,
 
 # Use Keras Sequential API instead, since it is easy to save the model
 filters = 10
-tiny_vgg = Sequential([
-    Conv2D(filters, (3, 3), input_shape=(64, 64, 3), name='conv_1_1'),
-    Activation('relu', name='relu_1_1'),
-    Conv2D(filters, (3, 3), name='conv_1_2'),
-    Activation('relu', name='relu_1_2'),
-    MaxPool2D((2, 2), name='max_pool_1'),
+def build_model():
+    model = Sequential([
+        Conv2D(10, (3, 3), padding='same', input_shape=(64, 64, 3), name='conv_1_1'),
+        Activation('relu', name='relu_1_1'),
+        Conv2D(10, (3, 3), padding='same', name='conv_1_2'),
+        Activation('relu', name='relu_1_2'),
+        MaxPool2D((2, 2), name='max_pool_1'),
 
-    Conv2D(filters, (3, 3), name='conv_2_1'),
-    Activation('relu', name='relu_2_1'),
-    Conv2D(filters, (3, 3), name='conv_2_2'),
-    Activation('relu', name='relu_2_2'),
-    MaxPool2D((2, 2), name='max_pool_2'),
+        Conv2D(10, (3, 3), padding='same', name='conv_2_1'),
+        Activation('relu', name='relu_2_1'),
+        Conv2D(10, (3, 3), padding='same', name='conv_2_2'),
+        Activation('relu', name='relu_2_2'),
+        MaxPool2D((2, 2), name='max_pool_2'),
 
-    Conv2D(filters, (3, 3), name='conv_3_1'),
-    Activation('relu', name='relu_3_1'),
-    Conv2D(filters, (3, 3), name='conv_3_2'),
-    Activation('relu', name='relu_3_2'),
-    MaxPool2D((2, 2), name='max_pool_3'),
+        Conv2D(10, (3, 3), padding='same', name='conv_3_1'),
+        Activation('relu', name='relu_3_1'),
+        Conv2D(10, (3, 3), padding='same', name='conv_3_2'),
+        Activation('relu', name='relu_3_2'),
+        MaxPool2D((2, 2), name='max_pool_3'),
 
-    Flatten(name='flatten'),
-    Dense(NUM_CLASS, activation='softmax', name='output')
-])
+        Conv2D(10, (3, 3), padding='same', name='conv_4_1'),
+        Activation('relu', name='relu_4_1'),
+        Conv2D(10, (3, 3), padding='same', name='conv_4_2'),
+        Activation('relu', name='relu_4_2'),
+        MaxPool2D((2, 2), name='max_pool_4'),
 
+        Flatten(name='flatten'),
+        Dense(10, activation='softmax', name='output')
+    ])
+    return model
+tiny_vgg = build_model()
 # "Compile" the model with loss function and optimizer
 loss_object = tf.keras.losses.CategoricalCrossentropy()
 # optimizer = tf.keras.optimizers.Adam(learning_rate=LR)
