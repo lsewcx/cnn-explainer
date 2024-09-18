@@ -61,4 +61,4 @@ def convert_h5_to_json(model_h5_file, model_json_file):
             json_dict[l.name]['weights'] = neuron_weights
 
     dump(json_dict, open(model_json_file, 'w'), indent=2)
-convert_h5_to_json('model.h5', 'model.json')
+convert_h5_to_json('/kaggle/working/cnn-explainer/tiny-vgg/trained_tiny_vgg.h5', 'nn_10.json')
