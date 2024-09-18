@@ -6,12 +6,11 @@ assert(int(tf.__version__.split('.')[0]) == 2)
 
 def convert_h5_to_json(model_h5_file, model_json_file):
     """
-    Helper function to convert tf2 stored model h5 file to a customized json
-    format.
+    辅助函数，将tf2存储的模型h5文件转换为自定义的json格式。
 
-    Args:
-        model_h5_file(string): filename of the stored h5 file
-        model_json_file(string): filename of the output json file
+    参数:
+        model_h5_file(string): 存储的h5文件名
+        model_json_file(string): 输出json文件名
     """
 
     model = tf.keras.models.load_model(model_h5_file)
@@ -28,16 +27,15 @@ def convert_h5_to_json(model_h5_file, model_json_file):
             all_weights = l.weights[0]
             neuron_weights = []
 
-            # Iterate through neurons in that layer
+            # 遍历该层中的神经元
             for n in range(all_weights.shape[3]):
                 cur_neuron_dict = {}
                 cur_neuron_dict['bias'] = l.bias.numpy()[n].item()
 
-                # Get the current weights
+                # 获取当前权重
                 cur_weights = all_weights[:, :, :, n].numpy().astype(float)
 
-                # Reshape the weights from (height, width, input_c) to
-                # (input_c, height, width)
+                # 将权重从(height, width, input_c)重塑为(input_c, height, width)
                 cur_weights = cur_weights.transpose((2, 0, 1)).tolist()
                 cur_neuron_dict['weights'] = cur_weights
 
@@ -49,12 +47,12 @@ def convert_h5_to_json(model_h5_file, model_json_file):
             all_weights = l.weights[0]
             neuron_weights = []
 
-            # Iterate through neurons in that layer
+            # 遍历该层中的神经元
             for n in range(all_weights.shape[1]):
                 cur_neuron_dict = {}
                 cur_neuron_dict['bias'] = l.bias.numpy()[n].item()
 
-                # Get the current weights
+                # 获取当前权重
                 cur_weights = all_weights[:, n].numpy().astype(float).tolist()
                 cur_neuron_dict['weights'] = cur_weights
 

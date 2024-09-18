@@ -346,26 +346,26 @@ const getInputImageArray = (imgFile) => {
 }
 
 /**
- * Compute convolutions of one kernel on one matrix (one slice of a tensor).
- * @param {[[number]]} input Input, square matrix
- * @param {[[number]]} kernel Kernel weights, square matrix
- * @param {int} stride Stride size
- * @param {int} padding Padding size
+ * 计算一个卷积核在一个矩阵（张量的一个切片）上的卷积。
+ * @param {[[number]]} input 输入，方形矩阵
+ * @param {[[number]]} kernel 卷积核权重，方形矩阵
+ * @param {int} stride 步幅大小
+ * @param {int} padding 填充大小
  */
 export const singleConv = (input, kernel, stride = 1, padding = 0) => {
-  // TODO: implement padding
+  // TODO: 实现填充
 
-  // Only support square input and kernel
+  // 仅支持方形输入和卷积核
   console.assert(input.length === input[0].length,
-    'Conv input is not square');
+    '卷积输入不是方形的');
   console.assert(kernel.length === kernel[0].length,
-    'Conv kernel is not square');
+    '卷积核不是方形的');
 
   let stepSize = (input.length - kernel.length) / stride + 1;
 
   let result = init2DArray(stepSize, stepSize, 0);
 
-  // Window sliding
+  // 窗口滑动
   for (let r = 0; r < stepSize; r++) {
     for (let c = 0; c < stepSize; c++) {
       let curWindow = matrixSlice(input, r * stride, r * stride + kernel.length,
@@ -378,19 +378,18 @@ export const singleConv = (input, kernel, stride = 1, padding = 0) => {
 }
 
 /**
- * Convolution operation. This function update the outputs property of all nodes
- * in the given layer. Previous layer is accessed by the reference in nodes'
- * links.
- * @param {[Node]} curLayer Conv layer.
+ * 卷积操作。此函数更新给定层中所有节点的输出属性。
+ * 通过节点链接中的引用访问上一层。
+ * @param {[Node]} curLayer 卷积层。
  */
 const convolute = (curLayer) => {
-  console.assert(curLayer[0].type === 'conv', 'Wrong layer type');
+  console.assert(curLayer[0].type === 'conv', '层类型错误');
 
-  // Itereate through all nodes in curLayer to update their outputs
+  // 遍历curLayer中的所有节点以更新它们的输出
   curLayer.forEach(node => {
     /*
-     * Accumulate the single conv result matrices from previous channels.
-     * Previous channels (node) are accessed by the reference in Link objects.
+     * 从先前的通道累积单个卷积结果矩阵。
+     * 通过Link对象中的引用访问先前的通道（节点）。
      */
     let newOutput = init2DArray(node.output.length, node.output.length, 0);
 
@@ -400,7 +399,7 @@ const convolute = (curLayer) => {
       newOutput = matrixAdd(newOutput, curConvResult);
     }
 
-    // Add bias to all element in the output
+    // 将偏置添加到输出的所有元素中
     let biasMatrix = init2DArray(newOutput.length, newOutput.length, node.bias);
     newOutput = matrixAdd(newOutput, biasMatrix);
 
@@ -409,12 +408,12 @@ const convolute = (curLayer) => {
 }
 
 /**
- * Activate matrix mat using ReLU (max(0, x)).
- * @param {[[number]]} mat Matrix
+ * 使用ReLU（max(0, x)）激活矩阵mat。
+ * @param {[[number]]} mat 矩阵
  */
 const singleRelu = (mat) => {
-  // Only support square matrix
-  console.assert(mat.length === mat[0].length, 'Activating non-square matrix!');
+  // 仅支持方形矩阵
+  console.assert(mat.length === mat[0].length, '激活的矩阵不是方形的！');
 
   let width = mat.length;
   let result = init2DArray(width, width, 0);
@@ -428,14 +427,13 @@ const singleRelu = (mat) => {
 }
 
 /**
- * Update outputs of all nodes in the current ReLU layer. Values of previous
- * layer nodes are accessed by the links stored in the current layer.
- * @param {[Node]} curLayer ReLU layer
+ * 更新当前ReLU层中所有节点的输出。通过存储在当前层中的链接访问上一层节点的值。
+ * @param {[Node]} curLayer ReLU层
  */
 const relu = (curLayer) => {
-  console.assert(curLayer[0].type === 'relu', 'Wrong layer type');
+  console.assert(curLayer[0].type === 'relu', '层类型错误');
 
-  // Itereate through all nodes in curLayer to update their outputs
+  // 遍历curLayer中的所有节点以更新它们的输出
   for (let i = 0; i < curLayer.length; i++) {
     let curNode = curLayer[i];
     let preNode = curNode.inputLinks[0].source;
@@ -444,21 +442,20 @@ const relu = (curLayer) => {
 }
 
 /**
- * Max pool one matrix.
- * @param {[[number]]} mat Matrix
- * @param {int} kernelWidth Pooling kernel length (only supports 2)
- * @param {int} stride Pooling sliding stride (only supports 2)
- * @param {string} padding Pading method when encountering odd number mat,
- * currently this function only supports 'VALID'
+ * 对一个矩阵进行最大池化。
+ * @param {[[number]]} mat 矩阵
+ * @param {int} kernelWidth 池化核长度（仅支持2）
+ * @param {int} stride 池化滑动步幅（仅支持2）
+ * @param {string} padding 遇到奇数矩阵时的填充方法，目前此函数仅支持'VALID'
  */
 export const singleMaxPooling = (mat, kernelWidth = 2, stride = 2, padding = 'VALID') => {
-  console.assert(kernelWidth === 2, 'Only supports kernen = [2,2]');
-  console.assert(stride === 2, 'Only supports stride = 2');
-  console.assert(padding === 'VALID', 'Only support valid padding');
+  console.assert(kernelWidth === 2, '仅支持kernel = [2,2]');
+  console.assert(stride === 2, '仅支持stride = 2');
+  console.assert(padding === 'VALID', '仅支持有效填充');
 
-  // Handle odd length mat
-  // 'VALID': ignore edge rows and columns
-  // 'SAME': add zero padding to make the mat have even length
+  // 处理奇数长度矩阵
+  // 'VALID': 忽略边缘行和列
+  // 'SAME': 添加零填充使矩阵具有偶数长度
   if (mat.length % 2 === 1 && padding === 'VALID') {
     mat = matrixSlice(mat, 0, mat.length - 1, 0, mat.length - 1);
   }
@@ -477,13 +474,13 @@ export const singleMaxPooling = (mat, kernelWidth = 2, stride = 2, padding = 'VA
 }
 
 /**
- * Max pooling one layer.
- * @param {[Node]} curLayer MaxPool layer
+ * 对一层进行最大池化。
+ * @param {[Node]} curLayer 最大池化层
  */
 const maxPooling = (curLayer) => {
-  console.assert(curLayer[0].type === 'pool', 'Wrong layer type');
+  console.assert(curLayer[0].type === 'pool', '层类型错误');
 
-  // Itereate through all nodes in curLayer to update their outputs
+  // 遍历curLayer中的所有节点以更新它们的输出
   for (let i = 0; i < curLayer.length; i++) {
     let curNode = curLayer[i];
     let preNode = curNode.inputLinks[0].source;
@@ -492,19 +489,18 @@ const maxPooling = (curLayer) => {
 }
 
 /**
- * Flatten a previous 2D layer (conv2d or maxpool2d). The flatten order matches
- * tf2.keras' implementation: channel -> row -> column.
- * @param {[Node]} curLayer Flatten layer
+ * 将先前的2D层（conv2d或maxpool2d）展平。展平顺序与tf2.keras的实现匹配：通道 -> 行 -> 列。
+ * @param {[Node]} curLayer 展平层
  */
 const flatten = (curLayer) => {
-  console.assert(curLayer[0].type === 'flatten', 'Wrong layer type');
+  console.assert(curLayer[0].type === 'flatten', '层类型错误');
 
-  // Itereate through all nodes in curLayer to update their outputs
+  // 遍历curLayer中的所有节点以更新它们的输出
   for (let i = 0; i < curLayer.length; i++) {
     let curNode = curLayer[i];
     let preNode = curNode.inputLinks[0].source;
     let coordinate = curNode.inputLinks[0].weight;
-    // Take advantage of the dummy weights
+    // 利用虚拟权重
     curNode.output = preNode.output[coordinate[0]][coordinate[1]];
   }
 }
@@ -515,22 +511,29 @@ const fullyConnect = (curLayer) => {
 }
 
 export const tempMain = async () => {
+  // 加载并构建神经网络
   let nn = await constructNN('PUBLIC_URL/assets/img/koala.jpeg');
+  
+  // 执行卷积和激活操作
   convolute(nn[1]);
-  relu(nn[2])
+  relu(nn[2]);
   convolute(nn[3]);
   relu(nn[4]);
   maxPooling(nn[5]);
   convolute(nn[6]);
-  relu(nn[7])
+  relu(nn[7]);
   convolute(nn[8]);
   relu(nn[9]);
   maxPooling(nn[10]);
   convolute(nn[11]);
-  relu(nn[12])
+  relu(nn[12]);
   convolute(nn[13]);
   relu(nn[14]);
   maxPooling(nn[15]);
+  
+  // 展平层
   flatten(nn[16]);
+  
+  // 输出展平层的结果
   console.log(nn[16].map(d => d.output));
 }
