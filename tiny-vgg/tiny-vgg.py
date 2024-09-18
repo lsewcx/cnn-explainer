@@ -197,13 +197,6 @@ class TinyVGG(Model):
         self.relu_3_2 = Activation('relu', name='relu_3_2')
         self.max_pool_3 = MaxPool2D((2, 2), name='max_pool_3')
 
-        # 新增的第四层卷积和激活
-        self.conv_4_1 = Conv2D(filters, (3, 3), name='conv_4_1')
-        self.relu_4_1 = Activation('relu', name='relu_4_1')
-        self.conv_4_2 = Conv2D(filters, (3, 3), name='conv_4_2')
-        self.relu_4_2 = Activation('relu', name='relu_4_2')
-        self.max_pool_4 = MaxPool2D((2, 2), name='max_pool_4')
-
         # 展平层和全连接层
         self.flatten = Flatten()
         self.fc = Dense(NUM_CLASS, activation='softmax')
@@ -229,13 +222,6 @@ class TinyVGG(Model):
         x = self.conv_3_2(x)
         x = self.relu_3_2(x)
         x = self.max_pool_3(x)
-
-        # 新增的第四层卷积和激活
-        x = self.conv_4_1(x)
-        x = self.relu_4_1(x)
-        x = self.conv_4_2(x)
-        x = self.relu_4_2(x)
-        x = self.max_pool_4(x)
 
         # 展平和全连接层
         x = self.flatten(x)
@@ -354,12 +340,6 @@ tiny_vgg = Sequential([
     Conv2D(filters, (3, 3), name='conv_3_2'),
     Activation('relu', name='relu_3_2'),
     MaxPool2D((2, 2), name='max_pool_3'),
-
-    Conv2D(filters, (3, 3), name='conv_4_1'),
-    Activation('relu', name='relu_4_1'),
-    Conv2D(filters, (3, 3), name='conv_4_2'),
-    Activation('relu', name='relu_4_2'),
-    MaxPool2D((2, 2), name='max_pool_4'),
 
     Flatten(name='flatten'),
     Dense(NUM_CLASS, activation='softmax', name='output')
