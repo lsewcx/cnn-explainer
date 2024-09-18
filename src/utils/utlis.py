@@ -15,7 +15,9 @@ def convert_h5_to_json(model_h5_file, model_json_file):
 
     model = tf.keras.models.load_model(model_h5_file)
     json_dict = {}
-
+    for l in model.layers:
+        with open(model_json_file, 'w') as f:
+            f.write(l)
     for l in model.layers:
         json_dict[l.name] = {
             'input_shape': l.input_shape[1:],
