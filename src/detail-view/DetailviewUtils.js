@@ -55,6 +55,11 @@ export function getMatrixSliceFromOutputHighlights(matrix, highlights) {
   return matrixSlice(matrix, Math.floor(indices[0] / matrix.length), Math.floor(indices[0] / matrix.length) + 1, indices[0] % matrix.length, indices[0] % matrix.length + 1);
 }
 
+/**
+ * 
+ * @param {*} imageLength 
+ * @returns 
+ */
 // Edit these values to change size of low-level conv visualization.
 export function getVisualizationSizeConstraint(imageLength) {
   let sizeOfGrid = 150;
@@ -62,42 +67,60 @@ export function getVisualizationSizeConstraint(imageLength) {
   return sizeOfGrid / imageLength > maxSizeOfGridCell ? maxSizeOfGridCell : sizeOfGrid / imageLength;
 }
 
+/**
+ * 获取图像数据的范围。
+ * 
+ * @param {*} image 输入图像
+ * @returns 图像数据的范围，包括最小值、最大值和范围
+ */
 export function getDataRange(image) {
-  let maxRow = image.map(function(row){ return Math.max.apply(Math, row); });
-  let max = Math.max.apply(null, maxRow);
-  let minRow = image.map(function(row){ return Math.min.apply(Math, row); });
-  let min = Math.min.apply(null, minRow);
+  let maxRow = image.map(function(row){ return Math.max.apply(Math, row); }); // 获取每行的最大值
+  let max = Math.max.apply(null, maxRow); // 获取图像的最大值
+  let minRow = image.map(function(row){ return Math.min.apply(Math, row); }); // 获取每行的最小值
+  let min = Math.min.apply(null, minRow); // 获取图像的最小值
   let range = {
-    range: 2 * Math.max(Math.abs(min), Math.abs(max)),
-    min: min,
-    max: max
+    range: 2 * Math.max(Math.abs(min), Math.abs(max)), // 计算范围
+    min: min, // 最小值
+    max: max // 最大值
   };
-  return range;
+  return range; // 返回范围对象
 }
 
-export function gridData(image, constraint=getVisualizationSizeConstraint(image.length)) {
-  // Constrain grids based on input image size.
-  var data = new Array();
-  var xpos = 1;
-  var ypos = 1;
-  var width = constraint;
-  var height = constraint;
+/**
+ * 根据输入图像大小约束网格。
+ * 
+ * @param {*} image 输入图像
+ * @param {*} constraint 约束值
+ * @returns 生成的网格数据
+ */
+export function gridData(image, constraint = getVisualizationSizeConstraint(image.length)) {
+  // 根据输入图像大小约束网格。
+  var data = new Array(); // 初始化数据数组
+  var xpos = 1; // 初始化x坐标位置
+  var ypos = 1; // 初始化y坐标位置
+  var width = constraint; // 设置网格宽度为约束值
+  var height = constraint; // 设置网格高度为约束值
+
+  // 遍历图像的每一行
   for (var row = 0; row < image.length; row++) {
-    data.push( new Array() );
+    data.push(new Array()); // 为每一行添加一个新数组
+
+    // 遍历图像的每一列
     for (var column = 0; column < image[0].length; column++) {
+      // 将当前像素的信息添加到数据数组中
       data[row].push({
-        text: Math.round(image[row][column] * 100) / 100,
-        row: row,
-        col: column,
-        x: xpos,
-        y: ypos,
-        width: width,
-        height: height
-      })
-      xpos += width;
+        text: Math.round(image[row][column] * 100) / 100, // 将像素值四舍五入到小数点后两位
+        row: row, // 当前行索引
+        col: column, // 当前列索引
+        x: xpos, // 当前x坐标位置
+        y: ypos, // 当前y坐标位置
+        width: width, // 网格宽度
+        height: height // 网格高度
+      });
+      xpos += width; // 更新x坐标位置
     }
-    xpos = 1;
-    ypos += height; 
+    xpos = 1; // 重置x坐标位置
+    ypos += height; // 更新y坐标位置
   }
-  return data;
+  return data; // 返回生成的网格数据
 }
