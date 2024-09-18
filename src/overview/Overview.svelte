@@ -178,7 +178,8 @@
     {file: 'espresso_1.jpeg', class: 'espresso'},
     {file: 'panda_1.jpeg', class: 'red panda'},
     {file: 'orange_1.jpeg', class: 'orange'},
-    {file: 'car_1.jpeg', class: 'sport car'}
+    {file: 'car_1.jpeg', class: 'sport car'},
+    
   ];
   let selectedImage = imageOptions[6].file;
 
@@ -1114,7 +1115,10 @@
       .attr("d", "M-5,-10L10,0L-5,10");
     
     console.time('Construct cnn');
+    // 加载训练好的模型
     model = await loadTrainedModel('PUBLIC_URL/assets/data/model.json');
+
+    // 构建CNN
     cnn = await constructCNN(`PUBLIC_URL/assets/img/${selectedImage}`, model);
     console.timeEnd('Construct cnn');
     cnnStore.set(cnn);

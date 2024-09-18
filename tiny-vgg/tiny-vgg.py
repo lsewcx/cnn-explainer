@@ -170,48 +170,74 @@ def prepare_for_testing(dataset, batch_size=32, cache=True):
 
 class TinyVGG(Model):
     """
-    Tiny VGG structure is adapted from http://cs231n.stanford.edu:
-        > This particular network is classifying CIFAR-10 images into one of 10
-        > classes and was trained with ConvNetJS. Its exact architecture is
-        > [conv-relu-conv-relu-pool]x3-fc-softmax, for a total of 17 layers and
-        > 7000 parameters. It uses 3x3 convolutions and 2x2 pooling regions.
+    Tiny VGG 结构改编自 http://cs231n.stanford.edu:
+        > 这个特定的网络将 CIFAR-10 图像分类为 10 类之一，并使用 ConvNetJS 进行训练。其确切的架构是
+        > [conv-relu-conv-relu-pool]x3-fc-softmax，总共 17 层和 7000 个参数。它使用 3x3 卷积和 2x2 池化区域。
     """
     def __init__(self, filters=10):
         super(TinyVGG, self).__init__()
+        # 第一层卷积和激活
         self.conv_1_1 = Conv2D(filters, (3, 3), name='conv_1_1')
         self.relu_1_1 = Activation('relu', name='relu_1_1')
         self.conv_1_2 = Conv2D(filters, (3, 3), name='conv_1_2')
         self.relu_1_2 = Activation('relu', name='relu_1_2')
         self.max_pool_1 = MaxPool2D((2, 2), name='max_pool_1')
 
+        # 第二层卷积和激活
         self.conv_2_1 = Conv2D(filters, (3, 3), name='conv_2_1')
         self.relu_2_1 = Activation('relu', name='relu_2_1')
         self.conv_2_2 = Conv2D(filters, (3, 3), name='conv_2_2')
         self.relu_2_2 = Activation('relu', name='relu_2_2')
         self.max_pool_2 = MaxPool2D((2, 2), name='max_pool_2')
 
+        # 第三层卷积和激活
+        self.conv_3_1 = Conv2D(filters, (3, 3), name='conv_3_1')
+        self.relu_3_1 = Activation('relu', name='relu_3_1')
+        self.conv_3_2 = Conv2D(filters, (3, 3), name='conv_3_2')
+        self.relu_3_2 = Activation('relu', name='relu_3_2')
+        self.max_pool_3 = MaxPool2D((2, 2), name='max_pool_3')
+
+        # 新增的第四层卷积和激活
+        self.conv_4_1 = Conv2D(filters, (3, 3), name='conv_4_1')
+        self.relu_4_1 = Activation('relu', name='relu_4_1')
+        self.conv_4_2 = Conv2D(filters, (3, 3), name='conv_4_2')
+        self.relu_4_2 = Activation('relu', name='relu_4_2')
+        self.max_pool_4 = MaxPool2D((2, 2), name='max_pool_4')
+
+        # 展平层和全连接层
         self.flatten = Flatten()
         self.fc = Dense(NUM_CLASS, activation='softmax')
 
     def call(self, x):
+        # 第一层卷积和激活
         x = self.conv_1_1(x)
         x = self.relu_1_1(x)
         x = self.conv_1_2(x)
         x = self.relu_1_2(x)
         x = self.max_pool_1(x)
 
+        # 第二层卷积和激活
         x = self.conv_2_1(x)
         x = self.relu_2_1(x)
         x = self.conv_2_2(x)
         x = self.relu_2_2(x)
         x = self.max_pool_2(x)
 
+        # 第三层卷积和激活
         x = self.conv_3_1(x)
         x = self.relu_3_1(x)
         x = self.conv_3_2(x)
         x = self.relu_3_2(x)
         x = self.max_pool_3(x)
 
+        # 新增的第四层卷积和激活
+        x = self.conv_4_1(x)
+        x = self.relu_4_1(x)
+        x = self.conv_4_2(x)
+        x = self.relu_4_2(x)
+        x = self.max_pool_4(x)
+
+        # 展平和全连接层
         x = self.flatten(x)
         return self.fc(x)
 
@@ -322,6 +348,18 @@ tiny_vgg = Sequential([
     Conv2D(filters, (3, 3), name='conv_2_2'),
     Activation('relu', name='relu_2_2'),
     MaxPool2D((2, 2), name='max_pool_2'),
+
+    Conv2D(filters, (3, 3), name='conv_3_1'),
+    Activation('relu', name='relu_3_1'),
+    Conv2D(filters, (3, 3), name='conv_3_2'),
+    Activation('relu', name='relu_3_2'),
+    MaxPool2D((2, 2), name='max_pool_3'),
+
+    Conv2D(filters, (3, 3), name='conv_4_1'),
+    Activation('relu', name='relu_4_1'),
+    Conv2D(filters, (3, 3), name='conv_4_2'),
+    Activation('relu', name='relu_4_2'),
+    MaxPool2D((2, 2), name='max_pool_4'),
 
     Flatten(name='flatten'),
     Dense(NUM_CLASS, activation='softmax', name='output')
