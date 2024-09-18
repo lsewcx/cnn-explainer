@@ -263,7 +263,7 @@ def test_step(image_batch, label_batch):
 
 WIDTH = 64
 HEIGHT = 64
-EPOCHS = 1000
+EPOCHS = 100
 PATIENCE = 50
 LR = 0.001
 NUM_CLASS = 10
