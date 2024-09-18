@@ -393,10 +393,10 @@ for epoch in range(EPOCHS):
         break
 
     # Reset evaluation metrics
-    train_mean_loss.reset_states()
-    train_accuracy.reset_states()
-    vali_mean_loss.reset_states()
-    vali_accuracy.reset_states()
+    train_mean_loss.reset_state()
+    train_accuracy.reset_state()
+    vali_mean_loss.reset_state()
+    vali_accuracy.reset_state()
 
 print('\nFinished training, used {:.4f} mins.'.format((time() -
                                                        start_time) / 60))
